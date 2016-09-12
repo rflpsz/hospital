@@ -6,22 +6,19 @@ define("DB_USER","PACIENTE");
 define("DB_HOST","138.117.36.146");
 define("DB_PASS","PAC");
 
-// Medida preventiva caso autoload abaixo não funcione
-include_once ("Conexao.class.php");
-
-function __autoload($className){
-	 if(file_exists($className.".class.php")){
-		  include($className.".class.php");
-	 }
+if(!@($conexao=pg_connect ("host=".DB_HOST." dbname=".DB_NAME." port=5432 user=".DB_USER." password=".DB_PASS)))
+{
+	return "Não foi possível estabelecer uma conexão com o banco de dados.";
 }
-
-// Funções de Banco de Dados
-$Conexao = Conexao::getInstance();
 
 function senha($string)
 {
-	return hash_hmac('sha256',$string, 'repense');
+	return hash_hmac('sha256',$string, 'hsc');
 }
 
+function consultaBanco($sql)
+{
+	return pg_query($sql);
+}
 
 ?>

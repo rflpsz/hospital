@@ -29,6 +29,7 @@ try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:1472648244,byc:0,owlid
 //]]>
 </script>
 <link rel="stylesheet" href="styles/app.min.css">
+<link rel="stylesheet" href="styles/loaders.css">
 
 </head>
 
@@ -40,7 +41,7 @@ try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:1472648244,byc:0,owlid
 			<div class="session-content">
 				<div class="card card-block form-layout">
 
-					<form action="javascript:AjaxForm('resultado','validate','controladores/autenticacao.php');" id="validate" role="form" name="validate">
+					<form action="javascript:AjaxForm('resultado','validate','controladores/autenticacao.php');" id="validate" role="form" name="validate" method="POST">
 					<div class="text-xs-center m-b-3">
 						<img src="images/hsc.png" height="80" alt="" class="m-b-1" />
 						<h5>Bem Vindo!</h5>
@@ -55,17 +56,17 @@ try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:1472648244,byc:0,owlid
 						<input type="password" name="Senha" class="form-control form-control-lg" id="password" placeholder="******" required />
 					</fieldset>
 					<label class="custom-control custom-checkbox m-b-1">
-					<input type="checkbox" class="custom-control-input">
+					<input type="checkbox" name="Auto" class="custom-control-input">
 					<span class="custom-control-indicator"></span> <span class="custom-control-description">Mantenha-me conectado!</span>
 					</label><button class="btn btn-primary btn-block btn-lg" type="submit">Login</button>
 					<br/>
-					<div id="resultado"> resultado vem aqui</div>
+					<div id="resultado" align="center"></div>
 					<br/>
 					</form>
 				</div>
 			</div>
 			<footer class="text-xs-center p-y-1">
-				<p> Copyright &copy; <?=date('Y');?> - Desenvolvido por <a href="#">rafaelsouza </a></p>
+				<p> Copyright &copy; <?=date('Y');?> - Desenvolvido por <a target="_blank" href="http://www.facebook.com/rafaelpereirasouza">Rafael Souza</a></p>
 			</footer>
 		</div>
 	</div>
@@ -80,6 +81,9 @@ try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:1472648244,byc:0,owlid
 	}
   };</script>
 <script src="scripts/app.min.js"></script>
+<script src="vendor/noty/js/noty/packaged/jquery.noty.packaged.min.js"></script>
+<script src="scripts/helpers/noty-defaults.js"></script>
+<script src="scripts/ui/notifications.js"></script>
 <script src="vendor/jquery-validation/dist/jquery.validate.min.js"></script>
 <script type="text/javascript">$('#validate').validate();</script>
 <script type="text/javascript" src="js/ajax.js"></script>

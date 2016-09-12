@@ -7,9 +7,9 @@ class Conexao extends PDO {
 	public function Conexao1($dsn, $username = "", $password = "") {
 		// O construtro abaixo é o do PDO
 		parent::__construct($dsn, $username, $password, array(
-											PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-											PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
-										));
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+			PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
+		));
 	}
 
 	public static function getInstance() {

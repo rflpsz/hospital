@@ -3,9 +3,10 @@ var ifila = 0
 var fila = new Array();
 //fila[X][0] - Div onde sera carregada a pagina.
 //fila[X][1] - Pagina que sera chamada
-//fila[X][2] - Metodo de envio
-//fila[X][3] - Campos do form concatenados no padrao para serem enviados. Null caso seja um link
-//fila[X][4] - Funcao que sera executada ao termino do processo. Null caso seja um ajaxLink/ajaxForm
+//fila[X][2] - Div onde sera exibido o carregando avulso ( Se nao declarada sera na mesma div que sera carregada a pagina)
+//fila[X][3] - Metodo de envio
+//fila[X][4] - Campos do form concatenados no padrao para serem enviados. Null caso seja um link
+//fila[X][5] - Funcao que sera executada ao termino do processo. Null caso seja um ajaxLink/ajaxForm
 
 
 
@@ -38,12 +39,12 @@ if (!xmlhttp){
 
 
 //GUARDA NA FILA O ID DO OBJETO E A URL QUE SERAO CARREGADOS PELO LINK CLICADO
-function AjaxLink(id_target,url){
+function AjaxLink(id_target,url,carregando){
 		//Exibe mensagem de que esta carregando a pagina no objeto de ID informado
-		ajaxMensagemCarregando(id_target);
+		ajaxMensagemCarregando(id_target,carregando);
 
 		//Adiciona a solicitacao na fila
-		fila[fila.length]=[id_target,url,"GET",null,null];
+		fila[fila.length]=[id_target,url,carregando,"GET",null,null];
 
 		//Se nao tem conexoes na fila, inicia a execucao
 		if(fila.length==1){
@@ -52,18 +53,20 @@ function AjaxLink(id_target,url){
 		return;
 }
 
+
+
 //GUARDA NA FILA O ID DO OBJETO E O FORM QUE SERAO CARREGADOS PELO LINK CLICADO
-function AjaxForm(id_target,id_form,url){
+function AjaxForm(id_target,id_form,url,carregando){
 		//Busca metodo de envio definido no form
 		var metodoEnvio = document.getElementById(id_form).method.toUpperCase();
 		//Busca os elementos do form que serao enviados para a pagina solicitada
 		var elementos_form = BuscaElementosForm(id_form);
 
 		//Exibe mensagem de que esta carregando a pagina no objeto de ID informado
-		ajaxMensagemCarregando(id_target);
+		ajaxMensagemCarregando(id_target,carregando);
 
 		//Adiciona a solicitacao na fila
-		fila[fila.length]=[id_target,url,metodoEnvio,elementos_form,null];
+		fila[fila.length]=[id_target,url,carregando,metodoEnvio,elementos_form,null];
 
 		//Se nao tem conexoes na fila, inicia a execucao
 		if(fila.length==1){
@@ -71,9 +74,9 @@ function AjaxForm(id_target,id_form,url){
 		}
 		return;
 }
-function AjaxFunction(id_target,funcao,url){
+function AjaxFunction(id_target,funcao,url,carregando){
 		//Adiciona a solicitacao na fila
-		fila[fila.length]=[id_target,url,"GET",null,funcao.replace('()',"")];
+		fila[fila.length]=[id_target,url,carregando,"GET",null,funcao.replace('()',"")];
 
 		//Se nao tem conexoes na fila, inicia a execucao
 		if(fila.length==1){
@@ -90,19 +93,19 @@ function ajaxRun(){
 
 		//Define o metodo de envio (GET ou POST)
 		var metodoEnvio;
-		if (fila[ifila][3]==null){
+		if (fila[ifila][4]==null){
 				//Se for Link/Funcao, utiliza GET
 				metodoEnvio = "GET";
 		}else{
 				//Se for Form, define o metodo de envio e prepara a url
-				metodoEnvio = fila[ifila][2];
+				metodoEnvio = fila[ifila][3];
 				if (metodoEnvio=="" || metodoEnvio==null){
 						//Se nao tiver definido nada, usa POST
 						metodoEnvio = "POST";
 				}
 				if (metodoEnvio=="GET"){
 						//Metodo GET passa as informacoes na linha da url
-						url = url + "?" + fila[ifila][3];
+						url = url + "?" + fila[ifila][4];
 				}
 		}
 
@@ -117,7 +120,7 @@ function ajaxRun(){
 				//Metodo POST precisa definir este RequestHeader
 				xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 				//Metodo POST passa as variaveis pelo metodo Send
-				xmlhttp.send(fila[ifila][3]);
+				xmlhttp.send(fila[ifila][4]);
 		}else{
 				xmlhttp.send(null);
 		}
@@ -130,25 +133,25 @@ function ajaxRun(){
 function ajaxXMLHTTP_StateChange() {
 		//0-Nao inicializado, 1-Carregando, 2-Carregado, 3-Interativo, 4-Completo
 		if (xmlhttp.readyState==1){
-				ajaxXMLHTTP_StateChange_Carregando(fila[ifila][0], fila[ifila][4]);//Quando iniciar a solicitacao
+				ajaxXMLHTTP_StateChange_Carregando(fila[ifila][0], fila[ifila][2], fila[ifila][5]);//Quando iniciar a solicitacao
 		}else{
 				if (xmlhttp.readyState==4){
-						ajaxXMLHTTP_StateChange_Completo(xmlhttp, fila[ifila][0], fila[ifila][4]);//Quando estiver completa a solicitacao
+						ajaxXMLHTTP_StateChange_Completo(xmlhttp, fila[ifila][0], fila[ifila][2], fila[ifila][5]);//Quando estiver completa a solicitacao
 				}
 		}
 }
 
 //FUNCAO EXECUTADA QUANDO INICIAR A SOLICITACAO (readyState=1)
-function ajaxXMLHTTP_StateChange_Carregando(id, funcao){
+function ajaxXMLHTTP_StateChange_Carregando(id, carregando, funcao){
 		if(funcao==null){
 				//Exibe mensagem de que está carregando a página no objeto de ID que solicitacao esta sendo feita
-				ajaxMensagemCarregando(id);
+				ajaxMensagemCarregando(id,carregando);
 		}
 		return;
 }
 
 //FUNCAO EXECUTADA QUANDO A SOLICITACAO ESTIVER COMPLETA (readyState=4)
-function ajaxXMLHTTP_StateChange_Completo(xmlhttp, id_retorno, funcao){
+function ajaxXMLHTTP_StateChange_Completo(xmlhttp, id_retorno, carregando, funcao){
 		var retorno;
 
 		//Verifica o status da pagina de retorno
@@ -162,9 +165,12 @@ function ajaxXMLHTTP_StateChange_Completo(xmlhttp, id_retorno, funcao){
 				retorno=ajaxPaginaErro(xmlhttp);
 		}
 		if(funcao==null){
+				// Se for declaro um carregando avulso, quando a pagina for carregada ele sumira
+				if(carregando != null)
+					document.getElementById(carregando).innerHTML="";
+					
 				//Exibe o valor retornado no objeto de ID informado
 				document.getElementById(id_retorno).innerHTML=retorno;
-				
 		}else{
 				//Se definiu uma funcao, executa esta funcao
 				eval(funcao+"('"+id_retorno+"','"+retorno+"');");
@@ -202,9 +208,16 @@ function ajaxPaginaErro(xmlhttp){
 }
 
 //FUNCAO PARA RETORNAR A MENSAGEM DE QUE ESTA CARREGANDO A PAGINA
-function ajaxMensagemCarregando(id){
-		document.getElementById(id).innerHTML = "<center><p title='Processando...'>Processando &nbsp; <img src='images/load.gif' alt='Processando&hellip;' /></p></center>";
-
+function ajaxMensagemCarregando(id,carregando)
+{
+	if(carregando != null)
+	{
+		document.getElementById(carregando).innerHTML = "<img src='images/load.gif' alt='Carregando...' />";
+	}
+	else
+	{
+		document.getElementById(id).innerHTML = '<div style="display: table;" class="loader text-center"><div class="loader-inner ball-scale-random"><div></div><div></div><div></div></div></div>';
+	}
 }
 
 //FUNCAO PARA PEGAR OS CODIGOS SCRIPT

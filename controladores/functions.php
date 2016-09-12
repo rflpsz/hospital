@@ -1,5 +1,132 @@
 <?php
 
+function formatar_tempo($timeBD) {
+
+	$timeNow = time();
+	$timeRes = $timeNow - $timeBD;
+	$nar = 0;
+	
+	// variável de retorno
+	$r = "";
+
+	// Agora
+	if ($timeRes == 0){
+		$r = "agora";
+	} else
+	// Segundos
+	if ($timeRes > 0 and $timeRes < 60){
+		$r = $timeRes. " segundos atr&aacute;s";
+	} else
+	// Minutos
+	if (($timeRes > 59) and ($timeRes < 3599)){
+		$timeRes = $timeRes / 60;	
+		if (round($timeRes,$nar) >= 1 and round($timeRes,$nar) < 2){
+			$r = round($timeRes,$nar). " minuto atr&aacute;s";
+		} else {
+			$r = round($timeRes,$nar). " minutos atr&aacute;s";
+		}
+	}
+	 else
+	// Horas
+	// Usar expressao regular para fazer hora e MEIA
+	if ($timeRes > 3559 and $timeRes < 85399){
+		$timeRes = $timeRes / 3600;
+		
+		if (round($timeRes,$nar) >= 1 and round($timeRes,$nar) < 2){
+			$r = round($timeRes,$nar). " hora atr&aacute;s";
+		}
+		else {
+			$r = round($timeRes,$nar). " horas atr&aacute;s";		
+		}
+	} else
+	// Dias
+	// Usar expressao regular para fazer dia e MEIO
+	if ($timeRes > 86400 and $timeRes < 2591999){
+		
+		$timeRes = $timeRes / 86400;
+		if (round($timeRes,$nar) >= 1 and round($timeRes,$nar) < 2){
+			$r = round($timeRes,$nar). " dia atr&aacute;s";
+		} else {
+
+			preg_match('/(\d*)\.(\d)/', $timeRes, $matches);
+			
+			if ($matches[2] >= 5) {
+				$ext = round($timeRes,$nar) - 1;
+				
+				// Imprime o dia
+				$r = $ext;
+				
+				// Formata o dia, singular ou plural
+				if ($ext >= 1 and $ext < 2){ $r.= " dia "; } else { $r.= " dias ";}
+				
+				// Imprime o final da data
+				$r.= "&frac12; atr&aacute;s";
+				
+				
+			} else {
+				$r = round($timeRes,0) . " dias atr&aacute;s";
+			}
+			
+		}		
+				
+	} else
+	// Meses
+	if ($timeRes > 2592000 and $timeRes < 31103999){
+
+		$timeRes = $timeRes / 2592000;
+		if (round($timeRes,$nar) >= 1 and round($timeRes,$nar) < 2){
+			$r = round($timeRes,$nar). " mes atr&aacute;s";
+		} else {
+
+			preg_match('/(\d*)\.(\d)/', $timeRes, $matches);
+			
+			if ($matches[2] >= 5){
+				$ext = round($timeRes,$nar) - 1;
+				
+				// Imprime o mes
+				$r.= $ext;
+				
+				// Formata o mes, singular ou plural
+				if ($ext >= 1 and $ext < 2){ $r.= " mes "; } else { $r.= " meses ";}
+				
+				// Imprime o final da data
+				$r.= "&frac12; atr&aacute;s";
+			} else {
+				$r = round($timeRes,0) . " meses atr&aacute;s";
+			}
+			
+		}
+	} else
+	// Anos
+	if ($timeRes > 31104000 and $timeRes < 155519999){
+		
+		$timeRes /= 31104000;
+		if (round($timeRes,$nar) >= 1 and round($timeRes,$nar) < 2){
+			$r = round($timeRes,$nar). " ano atr&aacute;s";
+		} else {
+			$r = round($timeRes,$nar). " anos atr&aacute;s";
+		}
+	} else
+	// 5 anos, mostra data
+	if ($timeRes > 155520000){
+		
+		$localTimeRes = localtime($timeRes);
+		$localTimeNow = localtime(time());
+				
+		$timeRes /= 31104000;
+		$gmt = array();
+		$gmt['mes'] = $localTimeRes[4];
+		$gmt['ano'] = round($localTimeNow[5] + 1900 - $timeRes,0);				
+					
+		$mon = array("Jan ","Fev ","Mar ","Abr ","Mai ","Jun ","Jul ","Ago ","Set ","Out ","Nov ","Dez "); 
+		
+		$r = $mon[$gmt['mes']] . $gmt['ano'];
+	}
+	
+	return $r;
+
+}
+
 function dataPT()
 {
 	$data = date('D');
@@ -35,15 +162,15 @@ function dataPT()
 	echo $semana["$data"] . ", {$dia} de " . $mes_extenso["$mes"] . " de {$ano}";
 }
 
-function banco($tabela,$order)
+function banco($sql)
 {
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM ' . $tabela .' ORDER by ID '. $order;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
+	include_once ("config.php");
+	$consulta = consultaBanco($sql);
+
+	// Retendo os dados do usuário do banco de dados
+	$dados = pg_fetch_assoc($consulta);
+
+	return $dados['count'];
 }
 
 function pegarIP()
@@ -61,126 +188,6 @@ function pegarIP()
 	}
 	return $ip;
  
-}
-
-// Consulta de clientes ou fornecedores Tipo 1 = clientes, Tipo 2 = fornecedores
-function consultaCliFor($tabela,$order,$AdminID,$Tipo)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM ' . $tabela .' WHERE AdminID = '.$AdminID.' AND Tipo = '.$Tipo.' ORDER by Titulo '. $order;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaCaixa($tabela,$order,$AdminID,$Lancamento)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = "SELECT c.*, a.Responsavel as Vendedor, IFNULL(p.Titulo, c.Titulo) as ItemNome FROM caixa c
-			INNER JOIN admin a ON a.ID = c.FuncionarioID
-			LEFT JOIN produtos p ON p.ID = c.Item
-			WHERE c.AdminID = '".$AdminID."' AND c.Lancamento = '".$Lancamento."' ORDER by c.Data ". $order;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaProSer($AdminID,$Tipo)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = "SELECT * FROM produtos p WHERE p.AdminID = '".$AdminID."' AND p.Grupo = '".$Tipo."'";
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaEndClientes($tabela,$ID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM '.$tabela.' WHERE ClienteID = '.$ID;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaVariaveis($tabela,$Tipo,$ID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	if ($Tipo == 1)
-	{
-		$SQL = "	SELECT
-					v.ID,
-					v.Titulo,
-					va.Titulo as Categoria
-				FROM
-					".$tabela." v
-				INNER JOIN ".$tabela." va ON va.ID <> v.ID 
-				WHERE v.AdminID = '".$ID."' AND v.Tipo = '".$Tipo."'
-				group by v.Titulo
-				ORDER by v.Titulo ASC";
-	}
-	else
-	{
-		$SQL = "SELECT * FROM ".$tabela." WHERE Tipo = '".$Tipo."' AND AdminID = ".$ID." ORDER by Titulo ASC";
-	}
-	
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consulta($tabela,$ID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM '.$tabela.' WHERE ID = '.$ID;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetch(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaCategoria($AdminID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM categorias WHERE AdminID = '.$AdminID;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaSubCategoria($CategoriaID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM subcategorias WHERE CategoriaID = '.$CategoriaID;
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-function consultaProduto()
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT ID,Grupo,Titulo FROM produtos WHERE AdminID = 0 OR AdminID = '.$_SESSION['Empresa']['Dados']['AdminID'];
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
 }
 
 function geraTimestamp($data)
@@ -203,32 +210,6 @@ function diferencaDatas($dataInicial,$dataFinal)
 
 	// Exibe qtde de dias
 	return $dias;
-}
-
-function consultaLembretes($tabela,$DonoID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = 'SELECT * FROM '.$tabela.' WHERE DonoID = '.$DonoID.' AND AdminID = '.$_SESSION['Empresa']['Dados']['AdminID'].' ORDER by ID DESC';
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	return $lista;
-}
-
-// Preencher select de Produtos
-function listaVariaveis($tabela,$ID)
-{
-	include_once ("controladores/config.php");
-	$Conexao = Conexao::getInstance();
-	$SQL = "SELECT * FROM ".$tabela." WHERE Tipo = '".$ID."'";
-	$dados = $Conexao->prepare($SQL);
-	$dados->execute();
-	$lista = $dados->fetchAll(PDO::FETCH_ASSOC);
-	echo '<pre>';
-	print_r($lista);
-	echo '</pre>';
-	return $lista;
 }
 
 function converteData($data)
@@ -262,53 +243,28 @@ function dataBanco($data, $converte)
 }
 
 function formata_data($dataa)
-
 {
+	$banco =  explode(" ",$dataa);
+	$data_pt = implode("/", array_reverse(explode("-",$banco[0])));
+	$separa = explode("/",$data_pt);
 
-$banco =  explode(" ",$dataa);
+	// formata o campo mes
+	$mesnome['01'] = "Janeiro";
+	$mesnome['02'] = "Fevereiro";
+	$mesnome['03'] = "Março";
+	$mesnome['04'] = "Abril";
+	$mesnome['05'] = "Maio";
+	$mesnome['06'] = "Junho";
+	$mesnome['07'] = "Julho";
+	$mesnome['08'] = "Agosto";
+	$mesnome['09'] = "Setembro";
+	$mesnome[10] = "Outubro";
+	$mesnome[11] = "Novembro";
+	$mesnome[12] = "Dezembro";
 
-$data_pt = implode("/", array_reverse(explode("-",$banco[0])));
+	$horario = explode(":",$banco[1]);
 
-$separa = explode("/",$data_pt);
-
-
-
-// formata o campo mes
-
-$mesnome['01'] = "Janeiro";
-
-$mesnome['02'] = "Fevereiro";
-
-$mesnome['03'] = "Março";
-
-$mesnome['04'] = "Abril";
-
-$mesnome['05'] = "Maio";
-
-$mesnome['06'] = "Junho";
-
-$mesnome['07'] = "Julho";
-
-$mesnome['08'] = "Agosto";
-
-$mesnome['09'] = "Setembro";
-
-$mesnome[10] = "Outubro";
-
-$mesnome[11] = "Novembro";
-
-$mesnome[12] = "Dezembro";
-
-
-
-$horario = explode(":",$banco[1]);
-
-
-
-
-
-return array("ano" => $separa[2],"mes" => $separa[1], "mes_nome" => $mesnome[$separa[1]],"dia" => $separa[0],"hora" => $horario[0],"minuto" => $horario[1]);
-
+	return array("ano" => $separa[2],"mes" => $separa[1], "mes_nome" => $mesnome[$separa[1]],"dia" => $separa[0],"hora" => $horario[0],"minuto" => $horario[1]);
 }
 
 
@@ -317,24 +273,23 @@ return array("ano" => $separa[2],"mes" => $separa[1], "mes_nome" => $mesnome[$se
 
 function canonical($string) 
 {		
-	 $lixo = array
-			(
-				"á" => "a","à" => "a","ã" => "a","â" => "a",
-				"Á" => "a","À" => "a","Ã" => "a","Â" => "a",
-				"é" => "e","è" => "e","ê" => "e",
-				"É" => "e","È" => "e","Ê" => "e",
-				"í" => "i","ì" => "i","î" => "i",
-				"Í" => "i","Ì" => "i","Î" => "i",
-				"ó" => "o","ò" => "o","õ" => "o","ô" => "o",
-				"Ó" => "o","Ò" => "o","Õ" => "o","Ô" => "o",
-				"ú" => "u","ù" => "u","û" => "u",
-				"Ú" => "u","Ù" => "u","Û" => "u",
-				"ç" => "c","Ç" => "c",
-				"ñ" => "n","Ñ" => "n",
-				" " => "-","/" => "-"
-			);
-
-  return str_replace(array_keys($lixo), array_values($lixo), $string); 
+	$lixo = array
+	(
+		"á" => "a","à" => "a","ã" => "a","â" => "a",
+		"Á" => "a","À" => "a","Ã" => "a","Â" => "a",
+		"é" => "e","è" => "e","ê" => "e",
+		"É" => "e","È" => "e","Ê" => "e",
+		"í" => "i","ì" => "i","î" => "i",
+		"Í" => "i","Ì" => "i","Î" => "i",
+		"ó" => "o","ò" => "o","õ" => "o","ô" => "o",
+		"Ó" => "o","Ò" => "o","Õ" => "o","Ô" => "o",
+		"ú" => "u","ù" => "u","û" => "u",
+		"Ú" => "u","Ù" => "u","Û" => "u",
+		"ç" => "c","Ç" => "c",
+		"ñ" => "n","Ñ" => "n",
+		" " => "-","/" => "-"
+	);
+	return str_replace(array_keys($lixo), array_values($lixo), $string); 
 
 }
 
